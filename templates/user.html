@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <title>Document</title>
+</head>
+<body>
+    <br>
+
+    {% if user %}
+        <img src="/{{user.image}}" />
+        <br>
+        <br>
+        <b style="margin-left: 41%">{{ user.id }} - {{ user.name }} </b>
+        <br>
+        <b style="margin-left: 41%">{{ user.tc }} </b>
+        <br>
+        <br>
+        <a class="btn btn-primary" style="margin-left: 39%; color: white;" href="/update/{{ user.id }}"> UPDATE </a>
+        <a class="btn btn-danger" style="margin-left: 5%;" href="/delete/{{ user.id }}"> DELETE </a>
+    {% endif %}
+    
+</body>
+
+<style>
+    body {
+        margin: auto;
+        margin-top: 12%;
+        margin-left: 20%;        
+        margin-right: 20%;
+    }
+  
+    #main {
+        width: 300px;
+        height: 70%;
+    }
+  
+  
+    b {
+      margin-top: 4%;
+      text-transform: uppercase;
+      font-size: 2em;
+      margin-left: 5%;
+      font-family:  Verdana, Arial, Helvetica, sans-serif; 
+    }
+  
+    img {
+      margin-left: 35%;
+      width: 200px; 
+      height: 200px;
+    }
+  
+  </style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+
+</html>

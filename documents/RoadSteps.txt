@@ -1,0 +1,11 @@
+1- Sistem başlatılır
+2- Login ekranından Owner sisteme giriş yapar
+   Owner olunmadığı takdir sign up işlemi yapılması gerekir
+3- Login sonrası owner anasayfaya yönlendirilir
+4- Anasayfada aktif kullanıcıların tamamı listelenir
+5- CRUD işlemlerinin tamamı kullanılar için tanımlıdır
+6- Match All butonu ile tarama başlatılır
+7- Eşleşme sağlandığı takdirde kullanıcının verilerinin bulunduğu sayfaya yönlendirilir 
+8- Mobil veya tabletten yapılan taramanın end pointi match all alanıdır
+9- Kullanıcı bulunduğu sayfada bu işleme dair log basılır 
+10- CRUD işlemlerinin tamamında log işlemi uygulanır

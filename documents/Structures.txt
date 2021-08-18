@@ -1,0 +1,8 @@
+Python Flask API
+Face detection (papilon api)
+Login and Register interface
+JWT (extra refresh) and Session kontrol
+Load Image (after: check and load image from camera)
+Black List for Assimulation
+React or another ui framework for user interface
+Loging system for all operations

@@ -1,0 +1,161 @@
+[{
+    'created_date': '2021-07-01T07:52:17+00:00',
+    'camera': {
+        'id': 5,
+        'created_date': '2021-03-04T11:37:27.836272Z',
+        'modified_date': '2021-07-01T07:25:37.150938Z',
+        'group': 1,
+        'active': True,
+        'name': 'Giriş',
+        'comment': '',
+        'url': 'rtsp://admin:1234@192.168.5.57:554/defaultPrimary?streamType=u',
+        'stream_settings_gpu': {
+            'roi': '',
+            'rot': '',
+            'play_speed': -1,
+            'jpeg_quality': 95,
+            'overall_only': True,
+            'ffmpeg_format': '',
+            'ffmpeg_params': [],
+            'imotion_threshold': 0,
+            'router_timeout_ms': 15000,
+            'router_verify_ssl': True,
+            'filter_min_quality': 0.45,
+            'filter_max_face_size': 8192,
+            'filter_min_face_size': 1,
+            'use_stream_timestamp': False,
+            'realtime_post_interval': 1,
+            'start_stream_timestamp': 0,
+            'realtime_post_every_interval': False,
+            'realtime_post_first_immediately': False
+        },
+        'screenshot': 'http://192.168.1.45/cameras/5/screenshot/',
+        'health_status': {
+            'enabled': True,
+            'status': 'INPROGRESS',
+            'msg': '',
+            'statistic': {
+                'job_starts': 2,
+                'frame_width': 2048,
+                'faces_failed': 0,
+                'faces_posted': 0,
+                'frame_height': 1536,
+                'frames_dropped': 0,
+                'processing_fps': 19.31786,
+                'faces_not_posted': 0,
+                'frames_processed': 711,
+                'processed_duration': 33.000668,
+                'decoding_soft_errors': 0,
+                'frames_imotion_skipped': 0
+            },
+            'code': 'green',
+            'code_desc': 'Everything is OK'
+        },
+        'threshold': None,
+        'latitude': None,
+        'longitude': None,
+        'azimuth': None
+    },
+    'camera_group': {
+        'id': 1,
+        'created_date': '2021-02-18T12:27:37.604890Z',
+        'modified_date': '2021-02-19T06:07:56.901201Z',
+        'active': True,
+        'name': 'Default Camera Group',
+        'comment': '',
+        'deduplicate': True,
+        'deduplicateDelay': 15,
+        'labels': {},
+        'permissions': {
+            '1': 'view',
+            '2': 'view',
+            '3': 'view'
+        },
+        'threshold': None
+    },
+    'face': 'http://192.168.1.45/uploads/2021/07/01/event/075219_face_cXoUS1.jpg',
+    'frame': 'http://192.168.1.45/uploads/2021/07/01/event/075219_full_frame_oSZPCA.jpg',
+    'frame_coords_left': 940,
+    'frame_coords_top': 1172,
+    'frame_coords_right': 1107,
+    'frame_coords_bottom': 1406,
+    'matched_face': '4362412081327912987',
+    'matched_dossier': 34,
+    'matched': True,
+    'matched_lists': [{
+        'id': 1,
+        'created_date': '2021-02-18T12:27:37.622509Z',
+        'modified_date': '2021-02-18T12:27:37.622550Z',
+        'active': True,
+        'name': 'Default Watch List',
+        'comment': '',
+        'color': '123456',
+        'notify': False,
+        'acknowledge': False,
+        'permissions': {
+            '1': 'view',
+            '2': 'view',
+            '3': 'view'
+        },
+        'camera_groups': [],
+        'threshold': None
+    }],
+    'confidence': 0.8297,
+    'quality': 0.932651,
+    'scores': {
+        'quality': 0.9326515793800351,
+        'liveness_score': None,
+        'track_duration_seconds': 4.200188888888761,
+        'track': {
+            'id': '0a2a60439e2e-44',
+            'first_timestamp': '2021-07-01T07:52:14.822Z',
+            'last_timestamp': '2021-07-01T07:52:19.115Z'
+        }
+    },
+    'acknowledged_date': '2021-07-01T07:52:17+00:00',
+    'acknowledged_by': None,
+    'acknowledged_reaction': '',
+    'acknowledged': True,
+    'episode': None,
+    'temperature': None,
+    'id': '4362414227458589462',
+    'features': {
+        'gender': {
+            'name': 'male',
+            'confidence': 1.0
+        },
+        'age': None,
+        'emotions': {
+            'name': 'neutral',
+            'confidence': 0.997354
+        },
+        'liveness': None,
+        'beard': None,
+        'glasses': {
+            'name': 'eye',
+            'confidence': 0.999917
+        },
+        'race': None,
+        'medmask': {
+            'name': 'none',
+            'confidence': 0.999999
+        }
+    },
+    'looks_like_confidence': None,
+    'bs_type': 'overall',
+    'webhook_type': 'events',
+    'event_type': 'event_created',
+    'dossier': {
+        'id': 34,
+        'active': True,
+        'created_date': '2021-07-01T07:39:00.382646Z',
+        'modified_date': '2021-07-01T07:44:40.854856Z',
+        'name': 'Furkan',
+        'comment': '',
+        'dossier_lists': [1],
+        'face_count': 1,
+        'has_faces': True,
+        'meta': {},
+        'person_id': '4362412743490045361'
+    }
+}]
