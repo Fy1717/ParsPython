@@ -4,7 +4,7 @@ from pars import db
 import datetime
 from sqlalchemy import func
 from datetime import datetime, date
-
+import requests
 
 
 # ------------------------------------------------------------
@@ -234,7 +234,7 @@ class Queries:
 
         return results
 
-    def loginLogout(self, userId, day, intime, outtime, deviceid):
+    def addLoginLogout(self, userId, day, intime, outtime, deviceid):
         addingLog = LoginLogout(userId, day, intime, outtime, deviceid)
 
         db.session.add(addingLog)
@@ -263,9 +263,16 @@ class Queries:
         return result
 
     #----------------------------------------------------- USERS
-    def getAllUsers(self):
+    def getAllUsers(self, status):
         try:
-            results = User.query.filter_by(activated=True).all()
+            if status == '' or status == None:
+                status = True
+            elif status == 'actives':
+                status = True
+            else:
+                status = False
+
+            results = User.query.filter_by(activated=status).all()
         except:
             results = 'USER NOT FOUND'
 
@@ -319,20 +326,53 @@ class Queries:
 
         self.sendLogMessage(id, 'USER UPDATED', datetime.now(), 2)
 
-    def deleteUser(self, id):
+    def deleteUser(self, id, deleteType):
         deletedUser = User.query.filter_by(id=id).first()
 
         if deletedUser:
             deletedUserState = deletedUser.activated
 
             if deletedUserState:
-                self.sendLogMessage(id, 'USER DELETED', datetime.now(), 2)
+                if deleteType == 'DEACTIVE' or deleteType == '' or deleteType == None:
+                    result = 'USER DEACTIVATED'
 
-                deletedUser.activated = False
+                    deletedUser.activated = False
+                elif deleteType == 'FROM NTECH':
+                    # headers = {
+                    #     'Authorization': 'Bearer dY7d-vR6i'
+                    # }
+                    # url = 'http://46.197.140.92:65015/v1/faces/id/' + id + '/'
+                    #
+                    # with requests.Session() as s:
+                    #     response = s.post(url, headers=headers).json()
+                    #
+                    # if response.status_code == 204:
+                    #     result = 'USER DELETE FROM NTECH'
+                    # else:
+                    #     result = 'USER COULDNT DELETE FROM NTECH'
+
+                    result = 'USER DELETE FROM NTECH'
+
+                elif deleteType == 'LOGS':
+                    LoginLogout.query.filter_by(userid=deletedUser.id).delete()
+                    LogProcessor.query.filter_by(userid=deletedUser.id).delete()
+                    User.query.filter_by(id=deletedUser.id).delete()
+
+                    result = 'USER DELETE FROM LOGS'
+                else:
+                    result = 'USER COULDNT DELETE'
             else:
+                result = 'USER ACTIVATED'
+
                 deletedUser.activated = True
 
             db.session.commit()
+        else:
+            result = 'ACTIVE USER NOT FOUND'
+
+        self.sendLogMessage(id, result, datetime.now(), 2)
+
+        return result
     #-----------------------------------------------------
 
     #----------------------------------------------------- ADMINS
@@ -418,7 +458,7 @@ class Queries:
         return result
     #-----------------------------------------------------
 
-    # ----------------------------------------------------- SHIFTS
+    # ----------------------------------------------------- BIOMETRICS
     def getAllBiometrics(self):
         try:
             results = Biometric.query.filter_by().all()
@@ -426,6 +466,17 @@ class Queries:
             results = 'BIOMETRIC NOT FOUND'
 
         return results
+
+    def getUserFromBiometrics(self, faceid):
+        try:
+            biometric = Biometric.query.filter_by(biometricid=str(faceid)).first()
+            userid = biometric.userid
+            user = User.query.filter_by(id=userid).first()
+            result = user
+        except:
+            result = 'USER NOT FOUND'
+
+        return result
 
     # -----------------------------------------------------
 

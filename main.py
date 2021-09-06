@@ -1,7 +1,7 @@
 # Kullanılan paketler ve modüller --------------------------------
 
 import os
-from flask import url_for, redirect, request, jsonify, session, send_file
+from flask import request, jsonify, session, send_file
 from pars.models import Queries, User, Biometric
 from pars import createApp, db
 from pars.initialize_db import createDB
@@ -13,6 +13,10 @@ from flask_cors import CORS
 from pathlib import Path
 import requests
 from datetime import date
+import cv2
+import base64
+import numpy as np
+import json
 
 # ------------------------------------------------------------------------------
 
@@ -53,6 +57,28 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     return decorator
 # ------------------------------------------------------------------------------
+
+def get_config():
+    with open ("config.json") as configFile:
+        config = json.load(configFile)
+
+    return config
+
+def to_numpy(img):
+    binary = base64.b64decode(img)
+    image = np.asarray(bytearray(binary), dtype="uint8")
+    image = cv2.imdecode(image, cv2.IMREAD_COLOR)
+
+    return (image)
+
+
+
+def to_base64(img):
+    retval, buffer = cv2.imencode('.png', img)
+    b_64 = base64.b64encode(buffer)
+
+    return ((b_64).decode('ascii'))
+
 
 # ------------------------------------------------------------------------------ SHIFT
 # Vardiya verilerinin işlendiği ve tutulduğu fonksiyonlardır
@@ -226,19 +252,28 @@ def apiLogsGate():
 
     try:
         logs = queries.getAllLogsGate()
+        status = request.args.get('status')
+
+        if status == 'actives':
+            status = True
+        else:
+            status = False
 
         resultArray = []
 
         if logs and logs != message:
             for log in logs:
-                resultArray.append({
-                    "id": log.id,
-                    "userid": log.userid,
-                    "day": log.day,
-                    "intime": log.intime,
-                    "outtime": log.outtime,
-                    "deviceid": log.deviceid
-                })
+                user = queries.getOneUser(log.userid)
+
+                if user.activated == status:
+                    resultArray.append({
+                        "id": log.id,
+                        "userid": log.userid,
+                        "day": log.day,
+                        "intime": log.intime,
+                        "outtime": log.outtime,
+                        "deviceid": log.deviceid
+                    })
 
             result = {
                 'logsGate': resultArray
@@ -280,9 +315,12 @@ def addLog():
             if existsLog and existsLog != 'LOG NOT FOUND':
                 return updateLog(existsLog)
             else:
-                queries.loginLogout(addedLog["userid"], addedLog["day"], addedLog["time"], addedLog["time"], addedLog["deviceid"])
+                try:
+                    queries.addLoginLogout(addedLog["userid"], addedLog["day"], addedLog["time"], addedLog["time"], addedLog["deviceid"])
 
-                return jsonify({'success': True, 'description': 'GIRIS YAPILDI'})
+                    return jsonify({'success': True, 'description': 'GIRIS YAPILDI'})
+                except Exception as e:
+                    return jsonify({'success': False, 'description': 'GIRIS YAPILAMADI', 'error': e})
         except Exception as e:
             return jsonify({'success': False, 'description': 'HATA', 'error': e})
     else:
@@ -298,10 +336,18 @@ def addLog():
 @app.route('/api/users')
 @token_required
 def apiUsers(current_user):
+    print("SSSSSSSSSSSSSS")
     message = "USER NOT FOUND"
 
     try:
-        results = queries.getAllUsers()
+        status = request.args.get('status')
+
+        print("STATUS : ", status)
+
+        results = queries.getAllUsers(status)
+
+        print("results : ", results)
+
 
         if results != message:
             resultArray = []
@@ -335,7 +381,7 @@ def apiUser(id):
     try:
         user = queries.getOneUser(id)
 
-        print("USER: ", user)
+        #print("USER: ", user)
 
         if user != message and user != None:
             result = {
@@ -388,9 +434,13 @@ def user(id):
 @app.route("/delete/<int:id>")
 def delete(id):
     try:
-        queries.deleteUser(id)
+        deleteType = request.args.get('deletetype') or 'DEACTIVE'
 
-        return jsonify({'success': True, 'description': 'User deleted successfully'})
+        result = queries.deleteUser(id, deleteType)
+
+        #print("RESULT : ", result)
+
+        return jsonify({'success': True, 'description': result})
     except Exception as e:
         return jsonify({'success': False, 'description': 'HATA', 'error': e})
 
@@ -441,7 +491,7 @@ def update(id):
             f.write(photo)
             f.close()
 
-            print('EDITED USER : ', editedUser)
+            #print('EDITED USER : ', editedUser)
 
             queries.updateUser(id, editedUser, True)
 
@@ -648,7 +698,7 @@ def apiDevices():
         'devices': resultArray
     }
 
-    print("DEVICES RESULT --> ", result)
+    #print("DEVICES RESULT --> ", result)
 
     return jsonify({'success': True, 'data': result})
 
@@ -677,9 +727,9 @@ def addDevice():
         gateid = request.args.get('gateid')
         typeid = request.args.get('typeid')
 
-        print("name  --> ", name)
-        print("gateid --> ", gateid)
-        print("typeid --> ", typeid)
+        # print("name  --> ", name)
+        # print("gateid --> ", gateid)
+        # print("typeid --> ", typeid)
 
 
         if name != '' and gateid != '' and typeid != '':
@@ -704,7 +754,7 @@ def updateDevice(id):
             "typeid": request.args.get('typeid') or updatedDevice.typeid,
         }
 
-        print("EDİTED ---> ", editedDevice)
+        #print("EDİTED ---> ", editedDevice)
         queries.updateDevice(id, editedDevice)
 
         return jsonify({'success': True, 'device': editedDevice})
@@ -765,7 +815,7 @@ def addBlock():
             block = {'name': name}
             queries.addBlock(block)
 
-            print("BLOCK --> ", block)
+            #print("BLOCK --> ", block)
             return jsonify({'success': True, 'data': block})
         else:
             return jsonify({'success': False})
@@ -815,7 +865,7 @@ def apiDeviceType():
         'deviceTypes': resultArray
     }
 
-    print("DEVICE TYPES RESULT --> ", result)
+    #print("DEVICE TYPES RESULT --> ", result)
 
     return jsonify({'success': True, 'data': result})
 
@@ -840,7 +890,7 @@ def addDeviceType():
     if request.method == 'POST':
         name = request.args.get('name')
 
-        print("name  --> ", name)
+        #print("name  --> ", name)
 
         if name != '':
             deviceType = {'name': name}
@@ -862,7 +912,7 @@ def updateDeviceType(id):
             "name": request.args.get('name') or updatedDeviceType.name,
         }
 
-        print("EDITED --> ", editedDeviceType)
+        #print("EDITED --> ", editedDeviceType)
 
         queries.updateDeviceType(id, editedDeviceType)
 
@@ -908,12 +958,17 @@ def apiBiometrics():
 def login():
     try:
         if request.method == 'POST':
+            #print("XXXXXXXXXXXXXXXXX")
+
             auth = request.form
 
+            #print("AUTH --> ", auth)
+
             if not auth or (not auth['username']) or (not auth['password']) or (not 'password' in auth):
-                return redirect(url_for('login'))
+                return jsonify({'success': False})
 
             owner = queries.getOneOwnerByUsername(username=auth['username'])
+            #print("OWNER --> ", owner)
 
             if check_password_hash(owner.password, auth['password']):
                 token = jwt.encode({'id': owner.id,
@@ -927,16 +982,15 @@ def login():
                     'username': owner.username
                 }
 
+                #print("OWNER --> ", owner)
+
                 return jsonify({'success': True, 'data': owner, 'token': token.decode('UTF-8')})
             else:
                 return jsonify({'success': False})
         else:
             return jsonify({'success': False})
-
-        #return make_response('could not verify', 401, {'WWW.Authentication': 'Basic realm: "login required"'})
-
     except Exception as e:
-        print(e)
+        #print(e)
         return jsonify({'success': False})
 
 # LOGOUT -----------
@@ -1030,87 +1084,85 @@ def signup_user():
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------ DETECT
-@app.route('/ntech', methods=['GET', 'POST'])
-@token_required
-def detect(current_user):
-    # data = request.json // from api
+@app.route('/ntech/getimage', methods=['GET', 'POST'])
+def detect():
+    fails = {'NO_FACES': 1, 'USER_NOT_FOUND': 2, 'IMAGE_CONVERT_ERROR': 3}
 
-    # data = [{'created_date': '2021-07-01T07:52:17+00:00',
-    #          'camera': {'id': 5, 'created_date': '2021-03-04T11:37:27.836272Z',
-    #                     'modified_date': '2021-07-01T07:25:37.150938Z', 'group': 1, 'active': True, 'name': 'Giriş',
-    #                     'comment': '', 'url': 'rtsp://admin:1234@192.168.5.57:554/defaultPrimary?streamType=u',
-    #                     'stream_settings_gpu': {'roi': '', 'rot': '', 'play_speed': -1, 'jpeg_quality': 95,
-    #                                             'overall_only': True, 'ffmpeg_format': '', 'ffmpeg_params': [],
-    #                                             'imotion_threshold': 0, 'router_timeout_ms': 15000,
-    #                                             'router_verify_ssl': True, 'filter_min_quality': 0.45,
-    #                                             'filter_max_face_size': 8192, 'filter_min_face_size': 1,
-    #                                             'use_stream_timestamp': False, 'realtime_post_interval': 1,
-    #                                             'start_stream_timestamp': 0, 'realtime_post_every_interval': False,
-    #                                             'realtime_post_first_immediately': False},
-    #                     'screenshot': 'http://192.168.1.45/cameras/5/screenshot/',
-    #                     'health_status': {'enabled': True, 'status': 'INPROGRESS', 'msg': '',
-    #                                       'statistic': {'job_starts': 2, 'frame_width': 2048, 'faces_failed': 0,
-    #                                                     'faces_posted': 0, 'frame_height': 1536, 'frames_dropped': 0,
-    #                                                     'processing_fps': 19.31786, 'faces_not_posted': 0,
-    #                                                     'frames_processed': 711, 'processed_duration': 33.000668,
-    #                                                     'decoding_soft_errors': 0, 'frames_imotion_skipped': 0},
-    #                                       'code': 'green', 'code_desc': 'EverythingisOK'}, 'threshold': None,
-    #                     'latitude': None, 'longitude': None, 'azimuth': None},
-    #          'camera_group': {'id': 1, 'created_date': '2021-02-18T12:27:37.604890Z',
-    #                           'modified_date': '2021-02-19T06:07:56.901201Z', 'active': True,
-    #                           'name': 'DefaultCameraGroup', 'comment': '', 'deduplicate': True, 'deduplicateDelay': 15,
-    #                           'labels': {}, 'permissions': {'1': 'view', '2': 'view', '3': 'view'}, 'threshold': None},
-    #          'face': 'http://192.168.1.45/uploads/2021/07/01/event/075219_face_cXoUS1.jpg',
-    #          'frame': 'http://192.168.1.45/uploads/2021/07/01/event/075219_full_frame_oSZPCA.jpg',
-    #          'frame_coords_left': 940, 'frame_coords_top': 1172, 'frame_coords_right': 1107,
-    #          'frame_coords_bottom': 1406,
-    #          'matched_face': '4362412081327912987', 'matched_dossier': 34, 'matched': True, 'matched_lists': [
-    #         {'id': 1, 'created_date': '2021-02-18T12:27:37.622509Z', 'modified_date': '2021-02-18T12:27:37.622550Z',
-    #          'active': True, 'name': 'DefaultWatchList', 'comment': '', 'color': '123456', 'notify': False,
-    #          'acknowledge': False, 'permissions': {'1': 'view', '2': 'view', '3': 'view'}, 'camera_groups': [],
-    #          'threshold': None}], 'confidence': 0.8297, 'quality': 0.932651,
-    #          'scores': {'quality': 0.9326515793800351, 'liveness_score': None,
-    #                     'track_duration_seconds': 4.200188888888761,
-    #                     'track': {'id': '0a2a60439e2e-44', 'first_timestamp': '2021-07-01T07:52:14.822Z',
-    #                               'last_timestamp': '2021-07-01T07:52:19.115Z'}},
-    #          'acknowledged_date': '2021-07-01T07:52:17+00:00', 'acknowledged_by': None, 'acknowledged_reaction': '',
-    #          'acknowledged': True, 'episode': None, 'temperature': None, 'id': '4362414227458589462',
-    #          'features': {'gender': {'name': 'male', 'confidence': 1.0}, 'age': None,
-    #                       'emotions': {'name': 'neutral', 'confidence': 0.997354}, 'liveness': None, 'beard': None,
-    #                       'glasses': {'name': 'eye', 'confidence': 0.999917}, 'race': None,
-    #                       'medmask': {'name': 'none', 'confidence': 0.999999}}, 'looks_like_confidence': None,
-    #          'bs_type': 'overall', 'webhook_type': 'events', 'event_type': 'event_created',
-    #          'dossier': {'id': 34, 'active': True, 'created_date': '2021-07-01T07:39:00.382646Z',
-    #                      'modified_date': '2021-07-01T07:44:40.854856Z', 'name': 'Furkan', 'comment': '',
-    #                      'dossier_lists': [1], 'face_count': 1, 'has_faces': True, 'meta': {},
-    #                      'person_id': '4362412743490045361'}}]
-    #
-    # dataObject = data[0]
-    #
-    # if 'dossier' in dataObject and 'name' in dataObject['dossier']:
-    #     userObject = dataObject['dossier']
-    #     userFromDB = queries.getOneUser(10)
-    #
-    #     print(userObject["person_id"])
-    #
-    #     user = {
-    #         "id": 10,  # userObject["id"], #userFromDB.id,
-    #         "tc": "12345678901",  # userFromDB.tc,
-    #         "name": userObject["name"],
-    #         "image": dataObject["face"],
-    #         "biometric_id": userObject["person_id"],
-    #         "image_from_db": userFromDB.image
-    #     }
-    #
-    #     deviceId = 1  # dataObject["camera"]["id"]
-    #     # userId, message, time, deviceid
-    #
-    #     queries.sendLogMessage(user["id"], 'DETECTED', datetime.datetime.now(), deviceId)
-    #
-    #     return jsonify({'success': True, 'user': user})
-    return jsonify({'success': False})
+    try:
+        if request.method == 'POST':
+            image = request.form['image']
+            image = cv2.imencode('.jpg', to_numpy(image.replace(" ", "+")))[1].tobytes()
+
+            url = 'http://46.197.140.92:65015/v1/identify/'
+            files = {'photo': ("TEST.jpg", image, {'Expires': '0'})}
+            headers = {
+                'Authorization': 'Bearer dY7d-vR6i'
+            }
+
+            with requests.Session() as s:
+                try:
+                    response = s.post(url, headers=headers, files=files).json()
+                except Exception as e:
+                    return jsonify({'success': False, 'description': 'Try Again!', 'error': e})
+
+                #print("responseResult ------------> ", response)
+
+                if "results" in response:
+                    responseResult = response["results"]
+
+                    faceid = responseResult[(next(iter(responseResult)))][0]['face']['id']
+
+                    if faceid != '' or faceid != None:
+                        #print("Faceid :", faceid)
+
+                        userFromFaceid = queries.getUserFromBiometrics(faceid)
+
+                        #print("userFromFaceid :", userFromFaceid)
+
+                        if userFromFaceid != None:
+                            if userFromFaceid.id != None:
+                                queries.addLoginLogout(userFromFaceid.id, date.today(), datetime.datetime.now(), datetime.datetime.now(), 2)
+                                imagePath = os.path.join(get_config()["faces"]["path"], userFromFaceid.image)
+
+                                userImage = cv2.imread(imagePath)
+
+                                try:
+                                    userImageBase64 = to_base64(userImage)
+                                except Exception:
+                                    return jsonify({'success': False, 'description': 'Try Again!', 'error': fails['IMAGE_CONVERT_ERROR']})
+
+                                userObj = {
+                                    "id": userFromFaceid.id,
+                                    "name": userFromFaceid.name,
+                                    "tc": userFromFaceid.tc,
+                                    "image": userImageBase64,
+                                    "shift": userFromFaceid.shift
+                                }
+
+                                return jsonify({'success': True, 'user': userObj, 'description': 'User Detected!'})
+                            else:
+                                return jsonify({'success': False, 'description': 'User Detected!', 'error': fails['USER_NOT_FOUND']})
+                        else:
+                            return jsonify({'success': False, 'description': 'Try Again!'})
+                else:
+                    if "code" in response:
+                        if response["code"] == 'NO_FACES':
+                            return jsonify({'success': False, 'description': 'Try Again!', 'error': fails['NO_FACES']})
+                        else:
+                            return jsonify({'success': False, 'description': 'Try Again!'})
+                    else:
+                        return jsonify({'success': False, 'description': 'Try Again!'})
+        else:
+            return jsonify({'success': False})
+    except Exception as e:
+        return jsonify({'success': False, 'description': e})
+
 
 # ------------------------------------------------------------------------------
+
+
+
+
 
 
 # ------------------------------------------------------------------------------ UI ROUTES
@@ -1162,7 +1214,7 @@ def index():
 
     #return {'success': True, 'users': allUsers}
 
-    return {'success': True}
+    return jsonify({'success': True})
 
 # ------------------------------------------------------------------------------
 
